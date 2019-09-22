@@ -30,7 +30,6 @@ public class AphroditeConnection {
             SimpleContainer container = (SimpleContainer) SimpleContainer.instance();
             JiraIssueTracker issueTrackerService = container.lookup(JiraIssueTracker.class.getSimpleName(), JiraIssueTracker.class);
 
-            //TODO: Get only 1 release
             Collection<JiraRelease> releases = JiraRelease.findAll();
 
             Collection<SimpleJiraRelease> simpleReleases = ReleaseDataSetCreator.convertReleases(releases);
