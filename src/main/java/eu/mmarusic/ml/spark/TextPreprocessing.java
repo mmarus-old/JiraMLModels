@@ -5,12 +5,9 @@ import eu.mmarusic.ml.aphrodite.AphroditeConnection;
 import eu.mmarusic.ml.aphrodite.ReleaseSerializer;
 import eu.mmarusic.ml.aphrodite.SimpleJiraIssue;
 import eu.mmarusic.ml.aphrodite.SimpleJiraRelease;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.StringIndexerModel;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
@@ -111,8 +108,5 @@ public class TextPreprocessing {
         // $example off$
         ss.getSpark().stop();
     }
-
-    //TODO: Try TF-IDF vectors
-    //TODO: With SVM models
 
 }
