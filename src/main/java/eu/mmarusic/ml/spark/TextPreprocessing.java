@@ -16,17 +16,26 @@ import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.Row;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.word2vec.Word2Vec;
+import org.deeplearning4j.text.sentenceiterator.CollectionSentenceIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marek Marusic <mmarusic@redhat.com> on 9/4/19.
  *
  */
 public class TextPreprocessing {
+    private static final String googleWord2VecPath = "/home/mmarusic/Downloads/GoogleNews-vectors-negative300.bin.gz";
+    private static final String googleWithJBEAPWord2VecPath = "/home/mmarusic/Downloads/jbeap-word2vec.txt";
+    private static Logger log = LoggerFactory.getLogger(TextPreprocessing.class);
 
     public static void main(String[] args) throws Exception {
         processData();
@@ -38,20 +47,12 @@ public class TextPreprocessing {
         Collection<SimpleJiraRelease> releases = ReleaseSerializer.deserialize(AphroditeConnection.fileName);
         data.addAll(Arrays.asList(releases.iterator().next().getIssues()));
 
+
 //        data.add(new SimpleJiraIssue("", "", "", "", "", 1, 1));
 
         //We'll use Spark local to handle our data
-
-        SparkConf conf = new SparkConf();
-        conf.setMaster("local[*]");
-        conf.setAppName("DataVec Example");
-
-        JavaSparkContext sc = new JavaSparkContext(conf);
-
-        SparkSession spark = SparkSession
-                .builder()
-                .appName("JavaIndexToStringExample")
-                .getOrCreate();
+        SparkSetup ss = new SparkSetup();
+        ss.startWithSessionName("text processing");
 
         StructType schema = new StructType(new StructField[]{
                 new StructField("url", DataTypes.StringType, false, Metadata.empty()),
@@ -62,7 +63,7 @@ public class TextPreprocessing {
                 new StructField("issuePriority", DataTypes.IntegerType, false, Metadata.empty()),
                 new StructField("issueType", DataTypes.IntegerType, false, Metadata.empty())
         });
-        Dataset<Row> df = spark.createDataFrame(data, SimpleJiraIssue.class);
+        Dataset<Row> df = ss.getSpark().createDataFrame(data, SimpleJiraIssue.class);
 
 
         //Data Processing
@@ -78,8 +79,6 @@ public class TextPreprocessing {
                 .fit(df);
         //Word2vec
 
-
-
         Dataset<Row> indexed = assigneeIndexer.transform(df);
         indexed = reporterIndexer.transform(indexed);
 
@@ -87,6 +86,11 @@ public class TextPreprocessing {
                 "to indexed column '" + assigneeIndexer.getOutputCol() + "'");
         df.show();
         indexed.show();
+
+        List<String> sentences = df.select("combineSummaryDescriptionLabelsComponents").collectAsList().stream().map(row -> row.getString(0)).collect(Collectors.toList());
+        Word2Vec word2Vec = Word2VecUpTraining.uptrainModel(googleWord2VecPath, new CollectionSentenceIterator(sentences));
+        //Save word2Vec uptrained model
+        WordVectorSerializer.writeWord2VecModel(word2Vec, googleWithJBEAPWord2VecPath);
 
 //        StructField inputColSchema = indexed.schema().apply(indexer.getOutputCol());
 //        System.out.println("StringIndexer will store labels in output column metadata: " +
@@ -101,10 +105,11 @@ public class TextPreprocessing {
 //                "original string column '" + converter.getOutputCol() + "' using labels in metadata");
 //        converted.select("labels", "labelsIndex", "originalLabels").show();
 
-        
+        Collection<String> lst = word2Vec.wordsNearest("day", 10);
+        log.info("Closest words to 'day' on 1st run: " + lst);
 
         // $example off$
-        spark.stop();
+        ss.getSpark().stop();
     }
 
     //TODO: Try TF-IDF vectors

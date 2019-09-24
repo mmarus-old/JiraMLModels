@@ -11,8 +11,10 @@
     <properties>
         <org.jboss.set.aphrodite.version>0.7.8.Final-SNAPSHOT</org.jboss.set.aphrodite.version>
         <datavec.version>1.0.0-beta3</datavec.version>
+        <nd4j.version>1.0.0-beta3</nd4j.version>
         <fasterxml.jackson.version>2.6.5</fasterxml.jackson.version>
         <fasterxml.jackson.databind.version>2.6.5</fasterxml.jackson.databind.version>
+        <nd4j.backend>nd4j-native-platform</nd4j.backend>
     </properties>
 
     <build>
@@ -111,6 +113,18 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
             <version>${fasterxml.jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-nlp</artifactId>
+            <version>1.0.0-beta3</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-native-platform</artifactId>
+            <version>${nd4j.version}</version>
         </dependency>
 
 
